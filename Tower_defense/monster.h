@@ -1,21 +1,4 @@
-#ifndef MONSTER_H
-#define MONSTER_H
-
+#include <SFML/Graphics.hpp>
+#include <vector>
+#include <memory>
 #include <string>
-
-class Monster {
-protected:
-    int hp, defense;
-    float moveSpeed;
-
-public:
-    
-};
-
-class TankMonster : public Monster {
-};
-
-class FastMonster : public Monster {
-};
-
-#endif 
