@@ -2,9 +2,24 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <random>
+#include <ctime>
 
 // Forward declarations
 class Enemy;
+
+// Random number generator
+int getRandomInt(int min, int max) {
+    static std::mt19937 rng(static_cast<unsigned>(std::time(nullptr)));
+    std::uniform_int_distribution<int> dist(min, max);
+    return dist(rng);
+}
+
+float getRandomFloat(float min, float max) {
+    static std::mt19937 rng(static_cast<unsigned>(std::time(nullptr)));
+    std::uniform_real_distribution<float> dist(min, max);
+    return dist(rng);
+}
 
 // Path class to define the path enemies will follow
 class Path {
@@ -33,6 +48,16 @@ public:
 };
 
 // Enemy class
+// Enemy types
+enum class EnemyType {
+    Red,
+    Blue,
+    Green,
+    Yellow,
+    Purple,
+    COUNT
+};
+
 class Enemy {
 private:
     sf::CircleShape shape;
@@ -40,13 +65,45 @@ private:
     float speed;
     int currentWaypoint;
     float health;
+    EnemyType type;
     
 public:
-    Enemy(const Path* pathRef, float size = 15.0f, float speed = 1.5f) 
-        : path(pathRef), speed(speed), currentWaypoint(0), health(100.0f) {
-        shape.setRadius(size);
-        shape.setOrigin(size, size);
-        shape.setFillColor(sf::Color::Red);
+    Enemy(const Path* pathRef, EnemyType enemyType = EnemyType::Red) 
+        : path(pathRef), currentWaypoint(0), type(enemyType) {
+        // Set properties based on enemy type
+        switch (type) {
+            case EnemyType::Blue:
+                speed = 1.2f;  // Slowest
+                shape.setRadius(12.0f);
+                shape.setFillColor(sf::Color(0, 100, 255));  // Deep Blue
+                break;
+            case EnemyType::Green:
+                speed = 1.6f;
+                shape.setRadius(14.0f);
+                shape.setFillColor(sf::Color(0, 200, 0));  // Green
+                break;
+            case EnemyType::Yellow:
+                speed = 2.0f;
+                shape.setRadius(16.0f);
+                shape.setFillColor(sf::Color(255, 255, 0));  // Yellow
+                break;
+            case EnemyType::Purple:
+                speed = 2.4f;
+                shape.setRadius(18.0f);
+                shape.setFillColor(sf::Color(160, 32, 240));  // Purple
+                break;
+            case EnemyType::Red:
+            default:
+                speed = 2.8f;  // Fastest
+                shape.setRadius(20.0f);
+                shape.setFillColor(sf::Color(255, 50, 50));  // Bright Red
+                break;
+        }
+        
+        // All enemies have the same health for simplicity
+        health = 100.0f;
+        
+        shape.setOrigin(shape.getRadius(), shape.getRadius());
         
         // Start at the first waypoint
         if (path && !path->waypoints.empty()) {
@@ -110,7 +167,24 @@ int main() {
     std::vector<Enemy> enemies;
     enemies.reserve(100);  // Pre-allocate some space to avoid reallocations
     sf::Clock spawnClock;
-    const float spawnInterval = 2.0f; // Spawn a new enemy every 2 seconds
+    float spawnTimer = 0.0f;
+    const float baseSpawnInterval = 0.8f; // Slightly faster base spawn interval
+    float spawnInterval = baseSpawnInterval;
+    
+    // Wave system
+    int currentWave = 0;
+    int enemiesInWave = 5;
+    int enemiesSpawned = 0;
+    bool waveInProgress = false;
+    sf::Font font;
+    if (!font.loadFromFile("arial.ttf")) {
+        std::cerr << "Failed to load font. Using default font." << std::endl;
+    }
+    sf::Text waveText;
+    waveText.setFont(font);
+    waveText.setCharacterSize(24);
+    waveText.setFillColor(sf::Color::White);
+    waveText.setPosition(10, 10);
     
     // Game loop
     while (window.isOpen()) {
@@ -123,11 +197,54 @@ int main() {
             }
         }
 
-        // Spawn new enemies
-        if (spawnClock.getElapsedTime().asSeconds() >= spawnInterval) {
-            enemies.emplace_back(&path);
-            spawnClock.restart();
+        // Wave and enemy spawning logic
+        float deltaTime = spawnClock.restart().asSeconds();
+        
+        if (!waveInProgress && enemies.empty()) {
+            // Start new wave
+            currentWave++;
+            enemiesInWave = 5 + currentWave * 2;
+            enemiesSpawned = 0;
+            waveInProgress = true;
+            spawnInterval = baseSpawnInterval * (1.0f - std::min(0.5f, currentWave * 0.05f)); // Speed up spawns as waves progress
+            std::cout << "Starting wave " << currentWave << std::endl;
         }
+        
+        if (waveInProgress) {
+            spawnTimer += deltaTime;
+            
+            // Spawn new enemies
+            if (spawnTimer >= spawnInterval && enemiesSpawned < enemiesInWave) {
+                // Cycle through enemy types in order
+                static int typeIndex = 0;
+                EnemyType type = static_cast<EnemyType>(typeIndex % 5);
+                typeIndex = (typeIndex + 1) % 5;
+                
+                // Spawn 1-3 enemies at once in later waves
+                int spawnCount = 1;
+                if (currentWave >= 5 && getRandomInt(1, 5) == 1) {
+                    spawnCount = getRandomInt(2, 3);
+                }
+                
+                for (int i = 0; i < spawnCount && enemiesSpawned < enemiesInWave; i++) {
+                    enemies.emplace_back(&path, type);
+                    enemiesSpawned++;
+                }
+                
+                spawnTimer = 0.0f;
+            }
+            
+            // Check if wave is complete
+            if (enemiesSpawned >= enemiesInWave && enemies.empty()) {
+                waveInProgress = false;
+                std::cout << "Wave " << currentWave << " complete!" << std::endl;
+            }
+        }
+        
+        // Update wave text
+        waveText.setString("Wave: " + std::to_string(currentWave) + 
+                          "\nEnemies: " + std::to_string(enemies.size()) + 
+                          " / " + std::to_string(enemiesInWave));
 
         // Update game state
         for (auto& enemy : enemies) {
@@ -151,6 +268,9 @@ int main() {
         for (const auto& enemy : enemies) {
             enemy.draw(window);
         }
+        
+        // Draw UI
+        window.draw(waveText);
 
         // Display everything
         window.display();
