@@ -183,6 +183,10 @@ public:
             // Move towards the waypoint using deltaTime
             if (type == EnemyType::Dolphin && dolphinTexturesLoaded) {
                 sprite.move(direction * speed * deltaTime);
+                // Set rotation to match direction
+                float angleRad = std::atan2(direction.y, direction.x);
+                float angleDeg = angleRad * 180.0f / 3.14159265f;
+                sprite.setRotation(angleDeg); // Head points right by default
             } else {
                 shape.move(direction * speed * deltaTime);
             }
