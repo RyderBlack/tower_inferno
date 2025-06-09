@@ -25,27 +25,134 @@ float getRandomFloat(float min, float max) {
 class Path {
 public:
     std::vector<sf::Vector2f> waypoints;
-    
+
+    static sf::Texture pathTileTexture;
+    static sf::Texture cornerTileTexture;
+    static sf::Texture groundTileTexture;
+    static bool texturesLoaded;
+
+    static void loadTextures() {
+        if (!texturesLoaded) {
+            if (!pathTileTexture.loadFromFile("C:/Users/ryrym_i6sf5hg/CLionProjects/tower_inferno/assets/textures/tower_inferno_path_01.png")) {
+                std::cerr << "Failed to load path tile texture." << std::endl;
+            }
+            if (!cornerTileTexture.loadFromFile("C:/Users/ryrym_i6sf5hg/CLionProjects/tower_inferno/assets/textures/tower_inferno_corner_01.png")) {
+                std::cerr << "Failed to load corner tile texture." << std::endl;
+            }
+            if (!groundTileTexture.loadFromFile("C:/Users/ryrym_i6sf5hg/CLionProjects/tower_inferno/assets/textures/tower_inferno_ground_tile.png")) {
+                std::cerr << "Failed to load ground tile texture." << std::endl;
+            }
+            texturesLoaded = pathTileTexture.getSize().x > 0 && cornerTileTexture.getSize().x > 0 && groundTileTexture.getSize().x > 0;
+        }
+    }
+
     Path() {
         // Define a simple path (you can modify these points as needed)
-        waypoints.push_back(sf::Vector2f(-50, 300));  // Start off-screen left
-        waypoints.push_back(sf::Vector2f(200, 300));
-        waypoints.push_back(sf::Vector2f(200, 100));
-        waypoints.push_back(sf::Vector2f(600, 100));
-        waypoints.push_back(sf::Vector2f(600, 500));
-        waypoints.push_back(sf::Vector2f(850, 500));  // End off-screen right
+        waypoints.push_back(sf::Vector2f(288, 144));  
+        waypoints.push_back(sf::Vector2f(864, 144));
+        waypoints.push_back(sf::Vector2f(864, 432));
+        waypoints.push_back(sf::Vector2f(432, 432));
+        waypoints.push_back(sf::Vector2f(432, 864));
+        waypoints.push_back(sf::Vector2f(864, 864));
+        waypoints.push_back(sf::Vector2f(864, 1224));  
     }
     
     void draw(sf::RenderWindow& window) {
-        // Draw the path for visualization
-        sf::VertexArray lines(sf::LineStrip, waypoints.size());
-        for (size_t i = 0; i < waypoints.size(); ++i) {
-            lines[i].position = waypoints[i];
-            lines[i].color = sf::Color(100, 100, 100, 100);  // Semi-transparent gray
+        if (!texturesLoaded) {
+            loadTextures();
         }
-        window.draw(lines);
+        const float tileDisplaySize = 96.0f; // Smaller tiles for path and ground
+        float scale = tileDisplaySize / static_cast<float>(pathTileTexture.getSize().x);
+        float groundScale = tileDisplaySize / static_cast<float>(groundTileTexture.getSize().x);
+
+        // Fill the window with ground tiles
+        sf::Vector2u winSize = window.getSize();
+        int tilesX = (winSize.x + tileDisplaySize - 1) / tileDisplaySize;
+        int tilesY = (winSize.y + tileDisplaySize - 1) / tileDisplaySize;
+        for (int y = 0; y < tilesY; ++y) {
+            for (int x = 0; x < tilesX; ++x) {
+                sf::Sprite ground(groundTileTexture);
+                ground.setOrigin(groundTileTexture.getSize().x / 2.0f, groundTileTexture.getSize().y / 2.0f);
+                ground.setPosition(x * tileDisplaySize + tileDisplaySize / 2.0f, y * tileDisplaySize + tileDisplaySize / 2.0f);
+                ground.setScale(groundScale, groundScale);
+                window.draw(ground);
+            }
+        }
+
+        // Draw path tiles
+        for (size_t i = 0; i + 1 < waypoints.size(); ++i) {
+            sf::Vector2f start = waypoints[i];
+            sf::Vector2f end = waypoints[i + 1];
+            sf::Vector2f delta = end - start;
+            float length = std::sqrt(delta.x * delta.x + delta.y * delta.y);
+            sf::Vector2f direction = (length > 0) ? delta / length : sf::Vector2f(1, 0);
+
+            // Determine if the segment is vertical or horizontal for correct rotation
+            float angle = 0.0f;
+            if (std::abs(direction.x) > std::abs(direction.y)) {
+                // Horizontal (lava flows left/right)
+                angle = 90.0f;
+            } else {
+                // Vertical (lava flows top/bottom)
+                angle = 0.0f;
+            }
+
+            // Place path tiles along the segment
+            for (float d = 0; d < length; d += tileDisplaySize) {
+                sf::Sprite tile(pathTileTexture);
+                sf::Vector2f pos = start + direction * d;
+                tile.setOrigin(pathTileTexture.getSize().x / 2.0f, pathTileTexture.getSize().y / 2.0f);
+                tile.setPosition(pos);
+                tile.setRotation(angle);
+                tile.setScale(scale, scale);
+                window.draw(tile);
+            }
+
+            // Draw corner tile at every direction change (i.e., at every bend)
+            if (i > 0 && i + 1 < waypoints.size()) {
+                sf::Vector2f prev = waypoints[i - 1];
+                sf::Vector2f curr = waypoints[i];
+                sf::Vector2f next = waypoints[i + 1];
+                sf::Vector2f dir1 = curr - prev;
+                sf::Vector2f dir2 = next - curr;
+                // Normalize
+                float len1 = std::sqrt(dir1.x * dir1.x + dir1.y * dir1.y);
+                float len2 = std::sqrt(dir2.x * dir2.x + dir2.y * dir2.y);
+                if (len1 > 0) dir1 /= len1;
+                if (len2 > 0) dir2 /= len2;
+                // Only consider cardinal directions
+                int dx1 = static_cast<int>(std::round(dir1.x));
+                int dy1 = static_cast<int>(std::round(dir1.y));
+                int dx2 = static_cast<int>(std::round(dir2.x));
+                int dy2 = static_cast<int>(std::round(dir2.y));
+                // If direction changes (not colinear)
+                if (dx1 != dx2 || dy1 != dy2) {
+                    sf::Sprite corner(cornerTileTexture);
+                    corner.setOrigin(cornerTileTexture.getSize().x / 2.0f, cornerTileTexture.getSize().y / 2.0f);
+                    corner.setPosition(curr);
+                    // Robust rotation logic for all 90-degree turns
+                    float cornerAngle = 0.0f;
+                    if (dx1 == 0 && dy1 == -1 && dx2 == 1 && dy2 == 0) cornerAngle = 0.0f;     // Up -> Right
+                    else if (dx1 == 1 && dy1 == 0 && dx2 == 0 && dy2 == 1) cornerAngle = 90.0f; // Right -> Down
+                    else if (dx1 == 0 && dy1 == 1 && dx2 == -1 && dy2 == 0) cornerAngle = 180.0f; // Down -> Left
+                    else if (dx1 == -1 && dy1 == 0 && dx2 == 0 && dy2 == -1) cornerAngle = 270.0f; // Left -> Up
+                    else if (dx1 == 0 && dy1 == -1 && dx2 == -1 && dy2 == 0) cornerAngle = 270.0f; // Up -> Left
+                    else if (dx1 == -1 && dy1 == 0 && dx2 == 0 && dy2 == 1) cornerAngle = 180.0f; // Left -> Down
+                    else if (dx1 == 0 && dy1 == 1 && dx2 == 1 && dy2 == 0) cornerAngle = 90.0f;  // Down -> Right
+                    else if (dx1 == 1 && dy1 == 0 && dx2 == 0 && dy2 == -1) cornerAngle = 0.0f;  // Right -> Up
+                    corner.setRotation(cornerAngle);
+                    corner.setScale(scale, scale);
+                    window.draw(corner);
+                }
+            }
+        }
     }
 };
+// Static member definitions for Path tiles
+sf::Texture Path::pathTileTexture;
+sf::Texture Path::cornerTileTexture;
+sf::Texture Path::groundTileTexture;
+bool Path::texturesLoaded = false;
 
 // Enemy class
 // Enemy types
@@ -236,16 +343,18 @@ sf::Texture Enemy::dolphinTexture2;
 bool Enemy::dolphinTexturesLoaded = false;
 
 int main() {
-    // Create the window
-    sf::RenderWindow window(sf::VideoMode(800, 600), "Tower Defense - Path Following");
-    window.setFramerateLimit(60);
-
+    Path::loadTextures(); // Load path textures once at the start
     Enemy::loadDolphinTextures(); // Load dolphin textures once at the start
     if (Enemy::dolphinTexturesLoaded) {
         std::cout << "Dolphin textures loaded successfully." << std::endl << std::flush;
     } else {
         std::cout << "Dolphin textures FAILED to load. Dolphins will use fallback shapes." << std::endl << std::flush;
     }
+
+    // Create the window (make it a large square)
+    const int windowSize = 864;
+    sf::RenderWindow window(sf::VideoMode(windowSize, windowSize), "Tower Defense - Path Following");
+    window.setFramerateLimit(60);
 
     // Path object needs to be created before it's used by enemies or logging
     Path path;
