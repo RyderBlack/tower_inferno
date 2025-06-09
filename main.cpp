@@ -72,6 +72,11 @@ private:
     sf::CircleShape shape; // For original enemies
     sf::Sprite sprite;     // For dolphin
 
+    // Animation state for dolphin
+    float dolphinAnimTimer = 0.0f;
+    int dolphinAnimFrame = 0;
+    static constexpr float dolphinAnimInterval = 0.15f; // 150ms per frame
+
 public:
     // Static textures for Dolphin
     static sf::Texture dolphinTexture1;
@@ -83,13 +88,14 @@ public:
             if (!dolphinTexture1.loadFromFile("C:/Users/ryrym_i6sf5hg/CLionProjects/tower_inferno/assets/sprites/dolphin/dolphin_inferno_01.png")) {
                 std::cerr << "Failed to load dolphin_inferno_01.png" << std::endl;
             }
-            // Only load/check texture1 for simplified static sprite
-            if (dolphinTexture1.getSize().x > 0) {
+            if (!dolphinTexture2.loadFromFile("C:/Users/ryrym_i6sf5hg/CLionProjects/tower_inferno/assets/sprites/dolphin/dolphin_inferno_02.png")) {
+                std::cerr << "Failed to load dolphin_inferno_02.png" << std::endl;
+            }
+            if (dolphinTexture1.getSize().x > 0 && dolphinTexture2.getSize().x > 0) {
                  dolphinTexturesLoaded = true;
-                 // No need to load dolphinTexture2 for now
             } else {
                  dolphinTexturesLoaded = false;
-                 std::cerr << "Dolphin texture dolphin_inferno_01.png failed to load properly." << std::endl;
+                 std::cerr << "Dolphin textures failed to load properly." << std::endl;
             }
         }
     }
@@ -107,6 +113,8 @@ public:
                     sprite.setTexture(dolphinTexture1); // Always use frame 1
                     sprite.setOrigin(dolphinTexture1.getSize().x / 2.0f, dolphinTexture1.getSize().y / 2.0f);
                     sprite.setScale(0.1f, 0.1f); // Scale down to 10%
+                    dolphinAnimTimer = 0.0f;
+                    dolphinAnimFrame = 0;
                 } else {
                     shape.setRadius(15.f);
                     shape.setFillColor(sf::Color::Cyan); 
@@ -172,21 +180,25 @@ public:
             direction /= distance;
         }
         
-        // Simplified waypoint switching condition, similar to original fixed threshold
-        // Threshold needs to be small enough to be accurate, but large enough to not get stuck.
-        // Movement per frame is (speed * deltaTime). Let's use a threshold slightly larger than typical movement per frame.
-        // e.g. if speed is 120 (2*60) and deltaTime is 1/60, movement is 2 pixels. Threshold of 5.0f should be fine.
         if (distance < 5.0f) { 
             currentWaypoint++;
-            // No snap logic for now to simplify
         } else {
-            // Move towards the waypoint using deltaTime
             if (type == EnemyType::Dolphin && dolphinTexturesLoaded) {
                 sprite.move(direction * speed * deltaTime);
-                // Set rotation to match direction
                 float angleRad = std::atan2(direction.y, direction.x);
                 float angleDeg = angleRad * 180.0f / 3.14159265f;
-                sprite.setRotation(angleDeg); // Head points right by default
+                sprite.setRotation(angleDeg);
+                // Animate dolphin
+                dolphinAnimTimer += deltaTime;
+                if (dolphinAnimTimer >= Enemy::dolphinAnimInterval) {
+                    dolphinAnimFrame = 1 - dolphinAnimFrame;
+                    dolphinAnimTimer = 0.0f;
+                    if (dolphinAnimFrame == 0) {
+                        sprite.setTexture(dolphinTexture1);
+                    } else {
+                        sprite.setTexture(dolphinTexture2);
+                    }
+                }
             } else {
                 shape.move(direction * speed * deltaTime);
             }
@@ -220,7 +232,7 @@ public:
 
 // Static member definitions
 sf::Texture Enemy::dolphinTexture1;
-sf::Texture Enemy::dolphinTexture2; // Still defined but not used by loadDolphinTextures or animation logic now
+sf::Texture Enemy::dolphinTexture2;
 bool Enemy::dolphinTexturesLoaded = false;
 
 int main() {
