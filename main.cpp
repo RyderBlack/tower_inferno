@@ -55,93 +55,146 @@ enum class EnemyType {
     Green,
     Yellow,
     Purple,
+    Dolphin,
     COUNT
 };
 
 class Enemy {
 private:
-    sf::CircleShape shape;
+    // Common properties
     const Path* path;
     float speed;
     int currentWaypoint;
     float health;
     EnemyType type;
-    
+
+    // Type-specific rendering
+    sf::CircleShape shape; // For original enemies
+    sf::Sprite sprite;     // For dolphin
+
 public:
+    // Static textures for Dolphin
+    static sf::Texture dolphinTexture1;
+    static sf::Texture dolphinTexture2;
+    static bool dolphinTexturesLoaded;
+
+    static void loadDolphinTextures() {
+        if (!dolphinTexturesLoaded) {
+            if (!dolphinTexture1.loadFromFile("C:/Users/ryrym_i6sf5hg/CLionProjects/tower_inferno/assets/sprites/dolphin/dolphin_inferno_01.png")) {
+                std::cerr << "Failed to load dolphin_inferno_01.png" << std::endl;
+            }
+            // Only load/check texture1 for simplified static sprite
+            if (dolphinTexture1.getSize().x > 0) {
+                 dolphinTexturesLoaded = true;
+                 // No need to load dolphinTexture2 for now
+            } else {
+                 dolphinTexturesLoaded = false;
+                 std::cerr << "Dolphin texture dolphin_inferno_01.png failed to load properly." << std::endl;
+            }
+        }
+    }
+
     Enemy(const Path* pathRef, EnemyType enemyType = EnemyType::Red) 
         : path(pathRef), currentWaypoint(0), type(enemyType) {
-        // Set properties based on enemy type
+        
+        health = 100.0f; // Common health
+        const float speedMultiplier = 60.0f; // To convert old speed-per-frame to speed-per-second
+
         switch (type) {
+            case EnemyType::Dolphin:
+                speed = 1.8f * speedMultiplier;
+                if (dolphinTexturesLoaded) {
+                    sprite.setTexture(dolphinTexture1); // Always use frame 1
+                    sprite.setOrigin(dolphinTexture1.getSize().x / 2.0f, dolphinTexture1.getSize().y / 2.0f);
+                    sprite.setScale(0.1f, 0.1f); // Scale down to 10%
+                } else {
+                    shape.setRadius(15.f);
+                    shape.setFillColor(sf::Color::Cyan); 
+                    shape.setOrigin(15.f, 15.f);
+                    std::cerr << "Dolphin instance created, but textures are not loaded. Using fallback shape." << std::endl;
+                }
+                break;
             case EnemyType::Blue:
-                speed = 1.2f;  // Slowest
+                speed = 1.2f * speedMultiplier;
                 shape.setRadius(12.0f);
-                shape.setFillColor(sf::Color(0, 100, 255));  // Deep Blue
+                shape.setFillColor(sf::Color(0, 100, 255));
+                shape.setOrigin(shape.getRadius(), shape.getRadius());
                 break;
             case EnemyType::Green:
-                speed = 1.6f;
+                speed = 1.6f * speedMultiplier;
                 shape.setRadius(14.0f);
-                shape.setFillColor(sf::Color(0, 200, 0));  // Green
+                shape.setFillColor(sf::Color(0, 200, 0));
+                shape.setOrigin(shape.getRadius(), shape.getRadius());
                 break;
             case EnemyType::Yellow:
-                speed = 2.0f;
+                speed = 2.0f * speedMultiplier;
                 shape.setRadius(16.0f);
-                shape.setFillColor(sf::Color(255, 255, 0));  // Yellow
+                shape.setFillColor(sf::Color(255, 255, 0));
+                shape.setOrigin(shape.getRadius(), shape.getRadius());
                 break;
             case EnemyType::Purple:
-                speed = 2.4f;
+                speed = 2.4f * speedMultiplier;
                 shape.setRadius(18.0f);
-                shape.setFillColor(sf::Color(160, 32, 240));  // Purple
+                shape.setFillColor(sf::Color(160, 32, 240));
+                shape.setOrigin(shape.getRadius(), shape.getRadius());
                 break;
             case EnemyType::Red:
             default:
-                speed = 2.8f;  // Fastest
+                speed = 2.8f * speedMultiplier;
                 shape.setRadius(20.0f);
-                shape.setFillColor(sf::Color(255, 50, 50));  // Bright Red
+                shape.setFillColor(sf::Color(255, 50, 50));
+                shape.setOrigin(shape.getRadius(), shape.getRadius());
                 break;
         }
         
-        // All enemies have the same health for simplicity
-        health = 100.0f;
-        
-        shape.setOrigin(shape.getRadius(), shape.getRadius());
-        
         // Start at the first waypoint
         if (path && !path->waypoints.empty()) {
-            shape.setPosition(path->waypoints[0]);
+            if (type == EnemyType::Dolphin && dolphinTexturesLoaded) {
+                sprite.setPosition(path->waypoints[0]);
+            } else {
+                shape.setPosition(path->waypoints[0]);
+            }
         }
     }
     
-    void update() {
+    void update(float deltaTime) { 
         if (!path || currentWaypoint >= path->waypoints.size() - 1) {
-            // Reached the end of the path
             return;
         }
         
-        // Get current and target waypoints
-        sf::Vector2f currentPos = shape.getPosition();
+        sf::Vector2f currentPos = getPosition();
         sf::Vector2f targetPos = path->waypoints[currentWaypoint + 1];
         
-        // Calculate direction vector
         sf::Vector2f direction = targetPos - currentPos;
         float distance = std::sqrt(direction.x * direction.x + direction.y * direction.y);
         
-        // Normalize direction
         if (distance > 0) {
             direction /= distance;
         }
         
-        // Move towards the target
-        if (distance < 2.0f) {
-            // Close enough to the waypoint, move to next one
+        // Simplified waypoint switching condition, similar to original fixed threshold
+        // Threshold needs to be small enough to be accurate, but large enough to not get stuck.
+        // Movement per frame is (speed * deltaTime). Let's use a threshold slightly larger than typical movement per frame.
+        // e.g. if speed is 120 (2*60) and deltaTime is 1/60, movement is 2 pixels. Threshold of 5.0f should be fine.
+        if (distance < 5.0f) { 
             currentWaypoint++;
+            // No snap logic for now to simplify
         } else {
-            // Move towards the waypoint
-            shape.move(direction * speed);
+            // Move towards the waypoint using deltaTime
+            if (type == EnemyType::Dolphin && dolphinTexturesLoaded) {
+                sprite.move(direction * speed * deltaTime);
+            } else {
+                shape.move(direction * speed * deltaTime);
+            }
         }
     }
     
     void draw(sf::RenderWindow& window) const {
-        window.draw(shape);
+        if (type == EnemyType::Dolphin && dolphinTexturesLoaded) {
+            window.draw(sprite);
+        } else {
+            window.draw(shape); // Draws other types, or dolphin fallback
+        }
     }
     
     bool hasReachedEnd() const {
@@ -149,20 +202,57 @@ public:
     }
     
     const sf::Vector2f& getPosition() const {
-        return shape.getPosition();
+        if (type == EnemyType::Dolphin && dolphinTexturesLoaded) {
+            return sprite.getPosition();
+        }
+        return shape.getPosition(); // Fallback for Dolphin or other types
+    }
+
+    // Getter for debugging
+    int getCurrentWaypointIndex() const {
+        return currentWaypoint;
     }
 };
+
+// Static member definitions
+sf::Texture Enemy::dolphinTexture1;
+sf::Texture Enemy::dolphinTexture2; // Still defined but not used by loadDolphinTextures or animation logic now
+bool Enemy::dolphinTexturesLoaded = false;
 
 int main() {
     // Create the window
     sf::RenderWindow window(sf::VideoMode(800, 600), "Tower Defense - Path Following");
     window.setFramerateLimit(60);
 
-    std::cout << "Game started" << std::endl;
+    Enemy::loadDolphinTextures(); // Load dolphin textures once at the start
+    if (Enemy::dolphinTexturesLoaded) {
+        std::cout << "Dolphin textures loaded successfully." << std::endl << std::flush;
+    } else {
+        std::cout << "Dolphin textures FAILED to load. Dolphins will use fallback shapes." << std::endl << std::flush;
+    }
 
-    // Create the path
+    // Path object needs to be created before it's used by enemies or logging
     Path path;
-    
+
+    sf::Font font;
+    sf::Text waveText; // Declare waveText earlier
+    bool fontSuccessfullyLoaded = false; // Renamed from fontLoaded for clarity here, will map to existing 'fontLoaded'
+
+    if (font.loadFromFile("arial.ttf")) {
+        std::cout << "Font arial.ttf loaded successfully." << std::endl << std::flush;
+        waveText.setFont(font); // Moved inside success block
+        waveText.setCharacterSize(24);
+        waveText.setFillColor(sf::Color::White);
+        waveText.setPosition(10, 10);
+        fontSuccessfullyLoaded = true;
+    }
+    else {
+        std::cout << "[IMPORTANT] Failed to load font arial.ttf. Wave text will not be shown." << std::endl << std::flush;
+        // fontSuccessfullyLoaded remains false, waveText is not configured with a bad font
+    }
+
+    std::cout << "Game started (after texture/font load attempts)" << std::endl << std::flush;
+
     // Create enemies
     std::vector<Enemy> enemies;
     enemies.reserve(100);  // Pre-allocate some space to avoid reallocations
@@ -176,69 +266,68 @@ int main() {
     int enemiesInWave = 5;
     int enemiesSpawned = 0;
     bool waveInProgress = false;
-    sf::Font font;
-    if (!font.loadFromFile("arial.ttf")) {
-        std::cerr << "Failed to load font. Using default font." << std::endl;
-    }
-    sf::Text waveText;
-    waveText.setFont(font);
-    waveText.setCharacterSize(24);
-    waveText.setFillColor(sf::Color::White);
-    waveText.setPosition(10, 10);
+    // sf::Text waveText was already declared, fontSuccessfullyLoaded replaces the old fontLoaded for the draw guard
     
     // Game loop
     while (window.isOpen()) {
+        float deltaTime = spawnClock.restart().asSeconds();
+
+        // --- Start Diagnostic Log (MOVED TO TOP) ---
+        // std::cout << "Loop Start | DeltaTime: " << deltaTime << " | Enemies: " << enemies.size() << std::flush;
+        // if (!enemies.empty()) {
+        //     const auto& firstEnemy = enemies[0];
+        //     sf::Vector2f pos = firstEnemy.getPosition();
+        //     int wp_idx = firstEnemy.getCurrentWaypointIndex();
+        //     std::cout << " | FirstEnemy Pos: (" << pos.x << "," << pos.y << ") WP_Idx: " << wp_idx << std::flush;
+        //     if (wp_idx < path.waypoints.size() -1 && wp_idx >=0) {
+        //          sf::Vector2f targetWpPos = path.waypoints[wp_idx+1];
+        //          std::cout << " TargetWP_Pos: (" << targetWpPos.x << "," << targetWpPos.y << ")" << std::flush;
+        //     }
+        // }
+        // std::cout << std::endl << std::flush;
+        // --- End Diagnostic Log ---
+
         // Handle events
         sf::Event event;
         while (window.pollEvent(event)) {
+            std::cout << "  Event Polled: Type = " << event.type << std::flush;
+            if (event.type == sf::Event::KeyPressed) {
+                std::cout << " Key: " << event.key.code << std::flush;
+            }
+            std::cout << std::endl << std::flush;
+
             if (event.type == sf::Event::Closed) {
-                std::cout << "Closing window" << std::endl;
+                std::cout << "  sf::Event::Closed received. Calling window.close()." << std::endl << std::flush;
+                window.close();
+            }
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) {
+                std::cout << "  Escape key pressed. Calling window.close()." << std::endl << std::flush;
                 window.close();
             }
         }
 
+        // If window was closed by an event, we might want to skip the rest of the frame processing
+        if (!window.isOpen()) {
+            std::cout << "Window closed in event loop, skipping rest of frame." << std::endl << std::flush;
+            continue; // Skip to next iteration (which will terminate the loop)
+        }
+
         // Wave and enemy spawning logic
-        float deltaTime = spawnClock.restart().asSeconds();
-        
         if (!waveInProgress && enemies.empty()) {
             // Start new wave
             currentWave++;
-            enemiesInWave = 5 + currentWave * 2;
-            enemiesSpawned = 0;
             waveInProgress = true;
-            spawnInterval = baseSpawnInterval * (1.0f - std::min(0.5f, currentWave * 0.05f)); // Speed up spawns as waves progress
-            std::cout << "Starting wave " << currentWave << std::endl;
-        }
-        
-        if (waveInProgress) {
-            spawnTimer += deltaTime;
-            
-            // Spawn new enemies
-            if (spawnTimer >= spawnInterval && enemiesSpawned < enemiesInWave) {
-                // Cycle through enemy types in order
-                static int typeIndex = 0;
-                EnemyType type = static_cast<EnemyType>(typeIndex % 5);
-                typeIndex = (typeIndex + 1) % 5;
-                
-                // Spawn 1-3 enemies at once in later waves
-                int spawnCount = 1;
-                if (currentWave >= 5 && getRandomInt(1, 5) == 1) {
-                    spawnCount = getRandomInt(2, 3);
-                }
-                
-                for (int i = 0; i < spawnCount && enemiesSpawned < enemiesInWave; i++) {
-                    enemies.emplace_back(&path, type);
-                    enemiesSpawned++;
-                }
-                
-                spawnTimer = 0.0f;
-            }
-            
-            // Check if wave is complete
-            if (enemiesSpawned >= enemiesInWave && enemies.empty()) {
-                waveInProgress = false;
-                std::cout << "Wave " << currentWave << " complete!" << std::endl;
-            }
+            spawnInterval = baseSpawnInterval * (1.0f - std::min(0.5f, currentWave * 0.05f));
+            std::cout << "Starting wave " << currentWave << std::endl << std::flush;
+
+            // Spawn a single dolphin at the start of the wave
+            enemies.emplace_back(&path, EnemyType::Dolphin);
+            // Spawn one of each colored circle at the start of the wave
+            enemies.emplace_back(&path, EnemyType::Red);
+            enemies.emplace_back(&path, EnemyType::Blue);
+            enemies.emplace_back(&path, EnemyType::Green);
+            enemies.emplace_back(&path, EnemyType::Yellow);
+            enemies.emplace_back(&path, EnemyType::Purple);
         }
         
         // Update wave text
@@ -248,7 +337,7 @@ int main() {
 
         // Update game state
         for (auto& enemy : enemies) {
-            enemy.update();
+            enemy.update(deltaTime);
         }
         
         // Remove enemies that reached the end
@@ -270,12 +359,14 @@ int main() {
         }
         
         // Draw UI
-        window.draw(waveText);
+        if (fontSuccessfullyLoaded) { // Guard drawing with the new flag
+            window.draw(waveText);
+        }
 
         // Display everything
         window.display();
     }
 
-    std::cout << "Game ended" << std::endl;
+    std::cout << "Game ended" << std::endl << std::flush;
     return 0;
 }
