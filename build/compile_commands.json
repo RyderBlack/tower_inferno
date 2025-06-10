@@ -1,0 +1,8 @@
+[
+{
+  "directory": "C:/Users/Abricot/Desktop/testSfml/build",
+  "command": "C:\\msys64\\ucrt64\\bin\\g++.exe  @CMakeFiles/app.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\app.dir\\main.cpp.obj -c C:\\Users\\Abricot\\Desktop\\testSfml\\main.cpp",
+  "file": "C:/Users/Abricot/Desktop/testSfml/main.cpp",
+  "output": "CMakeFiles/app.dir/main.cpp.obj"
+}
+]

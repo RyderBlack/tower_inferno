@@ -1,0 +1,2 @@
+g++ main.cpp -o app.exe -IC:/msys64/mingw64/include -LC:/msys64/mingw64/lib -lsfml-graphics -lsfml-window -lsfml-system
+./app.exe

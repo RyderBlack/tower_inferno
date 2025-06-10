@@ -1,0 +1,3 @@
+C:/Users/Abricot/Desktop/testSfml/build/CMakeFiles/app.dir
+C:/Users/Abricot/Desktop/testSfml/build/CMakeFiles/edit_cache.dir
+C:/Users/Abricot/Desktop/testSfml/build/CMakeFiles/rebuild_cache.dir
