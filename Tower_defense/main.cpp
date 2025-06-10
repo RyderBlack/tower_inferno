@@ -1,4 +1,4 @@
-#include <SFML/Graphics.hpp>
+﻿#include <SFML/Graphics.hpp>
 #include <vector>
 #include <memory>
 #include <iostream>
@@ -12,21 +12,21 @@ int main() {
     sf::RenderWindow window(sf::VideoMode(800, 800), "Tower Defense");
 
     sf::Texture rockTexture, lava1Texture, lava2Texture, lava3Texture, lava4Texture, lava5Texture, lava6Texture, goldTexture, heartTexture;
-    if (!rockTexture.loadFromFile("assets/rock.png") ||
-        !lava1Texture.loadFromFile("assets/horizontal_path.png") ||
-        !lava2Texture.loadFromFile("assets/verticale_path.png") ||
-        !lava3Texture.loadFromFile("assets/virage_gauche_bas.png") ||
-        !lava4Texture.loadFromFile("assets/virage_haut_droite.png") ||
-        !lava5Texture.loadFromFile("assets/virage_gauche_haut.png") ||
-        !lava6Texture.loadFromFile("assets/virage_bas_droite.png") ||
-        !goldTexture.loadFromFile("assets/gold.png") ||
-        !heartTexture.loadFromFile("assets/heart.png")) {
+    if (!rockTexture.loadFromFile("assets/textures/rock.png") ||
+        !lava1Texture.loadFromFile("assets/textures/horizontal_path.png") ||
+        !lava2Texture.loadFromFile("assets/textures/verticale_path.png") ||
+        !lava3Texture.loadFromFile("assets/textures/virage_gauche_bas.png") ||
+        !lava4Texture.loadFromFile("assets/textures/virage_haut_droite.png") ||
+        !lava5Texture.loadFromFile("assets/textures/virage_gauche_haut.png") ||
+        !lava6Texture.loadFromFile("assets/textures/virage_bas_droite.png") ||
+        !goldTexture.loadFromFile("assets/textures/Towers1.png") ||
+        !heartTexture.loadFromFile("assets/textures/heart.png")) {
         std::cerr << "Erreur lors du chargement des textures!" << std::endl;
         return -1;
     }
 
     sf::Font font;
-    if (!font.loadFromFile("assets/fast99.ttf")) {
+    if (!font.loadFromFile("assets/fonts/fast99.ttf")) {
         std::cerr << "Erreur lors du chargement de la police!" << std::endl;
         return -1;
     }
