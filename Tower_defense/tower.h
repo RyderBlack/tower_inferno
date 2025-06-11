@@ -29,7 +29,8 @@ struct TowerStats {
 
 class Tower {
 public:
-    sf::Vector2i position;
+    sf::Vector2i position;  // Screen position
+    sf::Vector2i gridPosition;  // Grid position
     int level = 1;
     int cost;
     int upgradeCost;

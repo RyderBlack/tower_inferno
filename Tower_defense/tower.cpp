@@ -1,8 +1,10 @@
-﻿#include "tower.h"
+#include "tower.h"
 #include <cmath>
+#include <iostream>
 
 Tower::Tower(sf::Vector2i pos, TowerType t, int baseCost, int upgradePrice, int maxLvl, TowerStats baseStats)
     : position(pos),
+      gridPosition(pos),  // Initialize gridPosition with the same value
       level(1),
       cost(baseCost),
       upgradeCost(upgradePrice),
@@ -67,14 +69,27 @@ TowerStats BasicTower::getBaseStats() const {
 
 void BasicTower::loadTextures() {
     if (!texturesLoaded) {
-        texture_harpoon1.loadFromFile("assets/sprites/towers/harpoon1.png");
-        texture_harpoon2.loadFromFile("assets/sprites/towers/harpoon2.png");
-        texture_harpoon3.loadFromFile("assets/sprites/towers/harpoon3.png");
+        std::cout << "Loading BasicTower textures..." << std::endl;
+        if (!texture_harpoon1.loadFromFile("assets/sprites/towers/harpoon1.png")) {
+            std::cerr << "Failed to load harpoon1.png" << std::endl;
+        }
+        if (!texture_harpoon2.loadFromFile("assets/sprites/towers/harpoon2.png")) {
+            std::cerr << "Failed to load harpoon2.png" << std::endl;
+        }
+        if (!texture_harpoon3.loadFromFile("assets/sprites/towers/harpoon3.png")) {
+            std::cerr << "Failed to load harpoon3.png" << std::endl;
+        }
+        std::cout << "BasicTower textures loaded: " 
+                  << texture_harpoon1.getSize().x << "x" << texture_harpoon1.getSize().y << ", "
+                  << texture_harpoon2.getSize().x << "x" << texture_harpoon2.getSize().y << ", "
+                  << texture_harpoon3.getSize().x << "x" << texture_harpoon3.getSize().y << std::endl;
         texturesLoaded = true;
     }
 }
 
 void BasicTower::render(sf::RenderWindow& window, int tileSize) {
+    std::cout << "Rendering tower at grid: (" << gridPosition.x << ", " << gridPosition.y << ")" << std::endl;
+    
     sf::Sprite sprite;
     if (level <= 2) {
         sprite.setTexture(texture_harpoon1);
@@ -84,10 +99,14 @@ void BasicTower::render(sf::RenderWindow& window, int tileSize) {
         sprite.setTexture(texture_harpoon3);
     }
     
+    // Calculate screen position from grid position
+    float screenX = static_cast<float>(gridPosition.x * tileSize + tileSize / 2);
+    float screenY = static_cast<float>(gridPosition.y * tileSize + tileSize / 2);
+    
     // Center the sprite on the tile
     sf::FloatRect bounds = sprite.getLocalBounds();
     sprite.setOrigin(bounds.width / 2, bounds.height / 2);
-    sprite.setPosition(position.x * tileSize + tileSize / 2, position.y * tileSize + tileSize / 2);
+    sprite.setPosition(screenX, screenY);
     
     // Scale down the sprite to fit the tile
     float scale = static_cast<float>(tileSize) * 0.8f / std::max(bounds.width, bounds.height);
@@ -125,14 +144,27 @@ TowerStats FireTower::getBaseStats() const {
 
 void FireTower::loadTextures() {
     if (!texturesLoaded) {
-        texture_fire1.loadFromFile("assets/sprites/towers/fire1.png");
-        texture_fire2.loadFromFile("assets/sprites/towers/fire2.png");
-        texture_fire3.loadFromFile("assets/sprites/towers/fire3.png");
+        std::cout << "Loading FireTower textures..." << std::endl;
+        if (!texture_fire1.loadFromFile("assets/sprites/towers/fire1.png")) {
+            std::cerr << "Failed to load fire1.png" << std::endl;
+        }
+        if (!texture_fire2.loadFromFile("assets/sprites/towers/fire2.png")) {
+            std::cerr << "Failed to load fire2.png" << std::endl;
+        }
+        if (!texture_fire3.loadFromFile("assets/sprites/towers/fire3.png")) {
+            std::cerr << "Failed to load fire3.png" << std::endl;
+        }
+        std::cout << "FireTower textures loaded: " 
+                  << texture_fire1.getSize().x << "x" << texture_fire1.getSize().y << ", "
+                  << texture_fire2.getSize().x << "x" << texture_fire2.getSize().y << ", "
+                  << texture_fire3.getSize().x << "x" << texture_fire3.getSize().y << std::endl;
         texturesLoaded = true;
     }
 }
 
 void FireTower::render(sf::RenderWindow& window, int tileSize) {
+    std::cout << "Rendering fire tower at grid: (" << gridPosition.x << ", " << gridPosition.y << ")" << std::endl;
+    
     sf::Sprite sprite;
     if (level <= 2) {
         sprite.setTexture(texture_fire1);
@@ -142,10 +174,14 @@ void FireTower::render(sf::RenderWindow& window, int tileSize) {
         sprite.setTexture(texture_fire3);
     }
     
+    // Calculate screen position from grid position
+    float screenX = static_cast<float>(gridPosition.x * tileSize + tileSize / 2);
+    float screenY = static_cast<float>(gridPosition.y * tileSize + tileSize / 2);
+    
     // Center the sprite on the tile
     sf::FloatRect bounds = sprite.getLocalBounds();
     sprite.setOrigin(bounds.width / 2, bounds.height / 2);
-    sprite.setPosition(position.x * tileSize + tileSize / 2, position.y * tileSize + tileSize / 2);
+    sprite.setPosition(screenX, screenY);
     
     // Scale down the sprite to fit the tile
     float scale = static_cast<float>(tileSize) * 0.8f / std::max(bounds.width, bounds.height);
@@ -183,14 +219,27 @@ TowerStats IceTower::getBaseStats() const {
 
 void IceTower::loadTextures() {
     if (!texturesLoaded) {
-        texture_ice1.loadFromFile("assets/sprites/towers/ice1.png");
-        texture_ice2.loadFromFile("assets/sprites/towers/ice2.png");
-        texture_ice3.loadFromFile("assets/sprites/towers/ice3.png");
+        std::cout << "Loading IceTower textures..." << std::endl;
+        if (!texture_ice1.loadFromFile("assets/sprites/towers/ice1.png")) {
+            std::cerr << "Failed to load ice1.png" << std::endl;
+        }
+        if (!texture_ice2.loadFromFile("assets/sprites/towers/ice2.png")) {
+            std::cerr << "Failed to load ice2.png" << std::endl;
+        }
+        if (!texture_ice3.loadFromFile("assets/sprites/towers/ice3.png")) {
+            std::cerr << "Failed to load ice3.png" << std::endl;
+        }
+        std::cout << "IceTower textures loaded: " 
+                  << texture_ice1.getSize().x << "x" << texture_ice1.getSize().y << ", "
+                  << texture_ice2.getSize().x << "x" << texture_ice2.getSize().y << ", "
+                  << texture_ice3.getSize().x << "x" << texture_ice3.getSize().y << std::endl;
         texturesLoaded = true;
     }
 }
 
 void IceTower::render(sf::RenderWindow& window, int tileSize) {
+    std::cout << "Rendering ice tower at grid: (" << gridPosition.x << ", " << gridPosition.y << ")" << std::endl;
+    
     sf::Sprite sprite;
     if (level <= 2) {
         sprite.setTexture(texture_ice1);
@@ -200,10 +249,14 @@ void IceTower::render(sf::RenderWindow& window, int tileSize) {
         sprite.setTexture(texture_ice3);
     }
     
+    // Calculate screen position from grid position
+    float screenX = static_cast<float>(gridPosition.x * tileSize + tileSize / 2);
+    float screenY = static_cast<float>(gridPosition.y * tileSize + tileSize / 2);
+    
     // Center the sprite on the tile
     sf::FloatRect bounds = sprite.getLocalBounds();
     sprite.setOrigin(bounds.width / 2, bounds.height / 2);
-    sprite.setPosition(position.x * tileSize + tileSize / 2, position.y * tileSize + tileSize / 2);
+    sprite.setPosition(screenX, screenY);
     
     // Scale down the sprite to fit the tile
     float scale = static_cast<float>(tileSize) * 0.8f / std::max(bounds.width, bounds.height);
