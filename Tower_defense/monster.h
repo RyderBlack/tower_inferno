@@ -24,6 +24,10 @@ public:
     bool hasReachedEnd() const;
     const sf::Vector2f& getPosition() const;
     static void loadDolphinTextures();
+    
+    // Add missing methods
+    bool isAlive() const { return health > 0; }
+    void takeDamage(float damage) { health -= damage; }
 
 private:
     const Path* path;

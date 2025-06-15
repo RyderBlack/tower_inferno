@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.15)
 project(tower_inferno)
 
 # Set Windows subsystem to GUI to avoid console window
@@ -30,6 +30,15 @@ set(SOURCES
     Tower_defense/main.cpp
     Tower_defense/monster.cpp
     Tower_defense/tower.cpp
+    # Model sources
+    Tower_defense/models/GameModel.cpp
+    Tower_defense/models/ScoreModel.cpp
+    # View sources
+    Tower_defense/views/GameView.cpp
+    Tower_defense/views/MenuView.cpp
+    # Controller sources
+    Tower_defense/controllers/GameController.cpp
+    Tower_defense/controllers/MenuController.cpp
 )
 
 # Create the executable
@@ -39,6 +48,10 @@ add_executable(tower_inferno WIN32 ${SOURCES})
 target_include_directories(tower_inferno PRIVATE 
     "C:/msys64/mingw64/include"
     ${CMAKE_SOURCE_DIR}/Tower_defense
+    ${CMAKE_SOURCE_DIR}/Tower_defense/models
+    ${CMAKE_SOURCE_DIR}/Tower_defense/views
+    ${CMAKE_SOURCE_DIR}/Tower_defense/controllers
+    ${CMAKE_SOURCE_DIR}
 )
 
 # Link SFML libraries

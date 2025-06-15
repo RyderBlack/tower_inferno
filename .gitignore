@@ -35,3 +35,8 @@
 .idea/
 .vscode/
 cmake-build-debug/
+build/
+Debug/
+Release/
+Release-*/
+Debug-*/
