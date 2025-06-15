@@ -15,7 +15,7 @@ set(SFML_DIR "C:/msys64/mingw64/lib/cmake/SFML" CACHE PATH "SFML directory")
 
 # Find SFML 2.6.1
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
-find_package(SFML 2.6.1 COMPONENTS graphics window system REQUIRED)
+find_package(SFML 2.6.1 COMPONENTS graphics window system audio REQUIRED)
 
 # Set SFML_STATIC if needed
 if(SFML_STATIC_LIBRARIES)
@@ -46,6 +46,7 @@ target_link_libraries(tower_inferno
     sfml-graphics 
     sfml-window 
     sfml-system
+    sfml-audio
 )
 
 # On Windows, we need to link against winmm, gdi32, and opengl32 for SFML
@@ -67,6 +68,7 @@ if (WIN32)
             ${SFML_BIN_DIR}/libsfml-graphics-2.dll
             ${SFML_BIN_DIR}/libsfml-window-2.dll
             ${SFML_BIN_DIR}/libsfml-system-2.dll
+            ${SFML_BIN_DIR}/libsfml-audio-2.dll
             $<TARGET_FILE_DIR:tower_inferno>
         COMMENT "Copying SFML DLLs..."
     )
